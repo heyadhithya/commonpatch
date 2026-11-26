@@ -6,6 +6,8 @@ const resources = {
   suggest: 'https://github.com/heyadhithya/commonpatch/issues/new?template=suggest-project.yml'
 };
 
+const practiceCollection = '#collection=ckan%2Fckan%239660%2Copenstreetmap%2Fid%238362%2Celectricitymaps%2Felectricitymaps-contrib%232912';
+
 const firstMessage = 'Hi! I tried the quick-start instructions on a fresh install and got stuck at the configuration step. I’d like to add the missing command and test the instructions again. Is anyone working on this already, and would that change fit here?';
 
 const steps = [
@@ -52,6 +54,7 @@ export function renderGuide() {
     '<div class="fg-copy-row"><button class="fg-action fg-copy" type="button" data-guide-copy>' + icon('comment', 16) + '<span>Copy message</span></button>' +
     '<span class="fg-copy-status" data-guide-status role="status" aria-live="polite"></span></div></section>' +
     '<section class="fg-reading" aria-labelledby="fg-reading"><h2 id="fg-reading">' + icon('book', 19) + 'Further reading</h2><ul>' +
+    '<li><a class="fg-external" href="' + practiceCollection + '">Try a three-issue practice shortlist' + icon('compass', 15) + '</a><span>Compare real issues across public data, mapping and climate. Check discussion and linked work before choosing.</span></li>' +
     '<li>' + outside('How to contribute to open source', resources.contributing) + '<span>GitHub Open Source Guides</span></li>' +
     '<li>' + outside('Walk through a first pull request', resources.walkthrough) + '<span>GitHub Docs</span></li></ul></section></div></div>' +
     '<div class="fg-bottom"><section aria-labelledby="fg-faq" class="fg-faq"><h2 id="fg-faq" tabindex="-1">Common questions</h2>' +

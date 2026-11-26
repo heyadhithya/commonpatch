@@ -49,6 +49,35 @@ export function toggleSaved(issue,storage) {
   return adding;
 }
 
+// A collection is one bookmark update: either every new issue fits, or none are added.
+export function saveCollection(issues, storage) {
+  let existing;
+  try {
+    storage ??= globalThis.localStorage;
+    const raw = storage.getItem(savedKey);
+    existing = raw === null ? [] : JSON.parse(raw);
+    if (!Array.isArray(existing) || existing.length > maxSaved || existing.some(item => !minimalIssue(item))) throw new Error();
+  } catch {
+    throw new Error('Your saved workbench could not be read. The collection has not been added.');
+  }
+  if (!Array.isArray(issues)) throw new Error('This collection is unavailable.');
+  const seen = new Set(existing.map(item => item.id.toLowerCase()));
+  const additions = [];
+  for (const issue of issues) {
+    const clean = minimalIssue(issue);
+    if (!clean) throw new Error('A collection issue could not be verified. Refresh the shortlist and try again.');
+    const ref = clean.id.toLowerCase();
+    if (!seen.has(ref)) { seen.add(ref); additions.push(clean); }
+  }
+  if (!additions.length) return 0;
+  const excess = existing.length + additions.length - maxSaved;
+  if (excess > 0) throw new Error('Your workbench holds up to 80 issues. Remove ' + excess +
+    (excess === 1 ? ' bookmark' : ' bookmarks') + ' to make room for this collection.');
+  try { storage.setItem(savedKey, JSON.stringify([...additions, ...existing])); }
+  catch { throw new Error('Your browser could not save this collection. Check site storage permissions.'); }
+  return additions.length;
+}
+
 export function isSaved(id) {
   return readSaved().some(item=>item.id.toLowerCase()===String(id).toLowerCase());
 }

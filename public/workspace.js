@@ -1,5 +1,5 @@
 import {categories, icon, esc} from './icons.js';
-import {snapshotBoard, onlineBoard, readSaved, toggleSaved, isSaved, filterIssues, starter, parseCollection, collectionLink} from './store.js';
+import {snapshotBoard, onlineBoard, readSaved, toggleSaved, saveCollection, isSaved, filterIssues, starter, parseCollection, collectionLink} from './store.js';
 import {openIssue, getIssuePlan} from './detail.js';
 import {openSession} from './session.js';
 import {describeIndex} from './index-status.js';
@@ -146,19 +146,37 @@ function projects(){
   const items=board.projects;
   main.innerHTML='<div class="shell info-page"><header class="page-heading"><span class="eyebrow">Project directory</span><h1>The projects</h1><p>Meet the maintainers’ projects behind the board. Browse issues or read how each project accepts contributions.</p></header><div class="project-grid">'+items.map(proj=>{
     const count=board.issues.filter(i=>i.repo.toLowerCase()===proj.repo.toLowerCase()).length;
-    return '<article class="project-card">'+projectIcon(proj.category)+'<span class="project-category">'+esc(proj.category)+'</span><h2>'+esc(proj.name)+'</h2><p>'+esc(proj.description)+'</p><div class="project-links"><button class="btn" data-project="'+esc(proj.repo)+'">'+count+' '+(count===1?'issue':'issues')+'</button><a class="text-link" href="'+esc('https://github.com/'+proj.repo)+'" target="_blank" rel="noopener noreferrer">Repository ↗</a></div></article>';
+    return '<article class="project-card">'+projectIcon(proj.category)+'<span class="project-category">'+esc(proj.category)+'</span><h2>'+esc(proj.name)+'</h2><p>'+esc(proj.description)+'</p><div class="project-links"><button class="btn" data-project="'+esc(proj.repo)+'">'+count+' '+(count===1?'issue':'issues')+'</button><a class="text-link" href="'+esc('https://github.com/'+proj.repo)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(proj.name)+' repository">Repository '+icon('external',13)+'</a>'+(typeof proj.contributingUrl==='string'&&proj.contributingUrl.startsWith('https://github.com/'+proj.repo+'/')?'<a class="text-link" target="_blank" rel="noopener noreferrer" href="'+esc(proj.contributingUrl)+'" aria-label="'+esc(proj.name)+' contribution guide">Contributing guide '+icon('external',13)+'</a>':'')+'</div></article>';
   }).join('')+'</div>'+(!items.length?emptyState('signal','Loading project directory',loadError||'The catalog is loading.',button('refresh','Retry')):'')+'</div>';
 }
+function syncCollectionAction(saved) {
+  const slot = select('#collection-action', main);
+  if (page !== 'collection' || !slot) return;
+  const known = new Set((saved || readSaved()).map(item => item.id.toLowerCase()));
+  const hasUnsaved = [...visibleIssues.keys()].some(id => !known.has(id));
+  const mode = hasUnsaved ? 'save' : visibleIssues.size ? 'open' : 'empty';
+  if (slot.dataset.mode === mode) return;
+  const restore = slot.contains(document.activeElement);
+  slot.dataset.mode = mode;
+  slot.hidden = mode === 'empty';
+  slot.innerHTML = mode === 'save' ? button('save-collection','Save collection to workbench','bookmark','btn-dark') :
+    mode === 'open' ? '<a class="btn btn-dark" href="#workbench">'+icon('bookmark',16)+'Open workbench</a>' : '';
+  if (restore) slot.firstElementChild?.focus({preventScroll:true});
+}
+
 function workbench(){
   visibleIssues=new Map();
   const saved=readSaved();
   const indexed=new Map(board.issues.map(i=>[i.id.toLowerCase(),i]));
-  let items=page==='collection'?sharedRefs.map(ref=>indexed.get(ref)||saved.find(i=>i.id.toLowerCase()===ref)).filter(Boolean):saved.map(item=>indexed.get(item.id.toLowerCase())||{...item,offIndex:true});
+  const savedById=new Map(saved.map(item=>[item.id.toLowerCase(),item]));
+  const resolveItem=ref=>indexed.get(ref)||(savedById.has(ref)?{...savedById.get(ref),offIndex:true}:null);
+  const items=page==='collection'?sharedRefs.map(resolveItem).filter(Boolean):saved.map(item=>resolveItem(item.id.toLowerCase()));
   const known=new Set(items.map(i=>i.id.toLowerCase()));
   const missing=page==='collection'?sharedRefs.filter(id=>!known.has(id)):[];
   const collection=page==='collection';
   const extra=missing.length?'<div class="collection-note">'+missing.length+' '+(missing.length===1?'issue is':'issues are')+' outside the current index. Check the original on GitHub.<ul>'+missing.map(id=>{const [repo,num]=id.split('#');return '<li><a class="text-link" href="https://github.com/'+esc(repo)+'/issues/'+num+'" target="_blank" rel="noopener noreferrer">'+esc(id)+' ↗</a></li>';}).join('')+'</ul></div>':'';
-  main.innerHTML='<div class="shell info-page"><header class="page-heading"><span class="eyebrow">'+(collection?'Public shortlist':'Personal shortlist')+'</span><h1>'+(collection?'Shared collection':'Your workbench')+'</h1><p>'+(collection?'A collection of public GitHub issues. Save any issue to start a private contribution plan.':'Keep issues you’re considering and pick up your preparation where you left off. Saved work stays in this browser.')+'</p></header><div class="bench-tools">'+(saved.length&&!collection?button('session','Plan a patch session','clock','btn-dark')+button('share','Share shortlist','share'):'')+'<a class="btn" href="#explore">'+icon('compass',16)+'Explore issues</a></div>'+extra+'<div class="issue-list work-list">'+(items.length?items.map(i=>renderIssue(i,!collection)).join(''):missing.length?'':emptyState('bookmark',collection?'No valid issues in this link':'Your workbench is empty',collection?'Ask the sender to copy the collection link again.':'Bookmark an issue on the board. Open it here to keep a private note, prepare a question, and plan your first contribution.'))+'</div></div>';
+  main.innerHTML='<div class="shell info-page"><header class="page-heading"><span class="eyebrow">'+(collection?'Public shortlist':'Personal shortlist')+'</span><h1>'+(collection?'Shared collection':'Your workbench')+'</h1><p>'+(collection?'Save these public issues to your workbench, where you can keep a private contribution plan for each one.':'Keep issues you’re considering and pick up your preparation where you left off. Saved work stays in this browser.')+'</p></header><div class="bench-tools">'+(collection?'<span id="collection-action" hidden></span>':'')+(saved.length&&!collection?button('session','Plan a patch session','clock','btn-dark')+button('share','Share shortlist','share'):'')+'<a class="btn" href="#explore">'+icon('compass',16)+'Explore issues</a></div>'+extra+'<div class="issue-list work-list">'+(items.length?items.map(i=>renderIssue(i,!collection)).join(''):missing.length?'':emptyState('bookmark',collection?'No valid issues in this link':'Your workbench is empty',collection?'Ask the sender to copy the collection link again.':'Bookmark an issue on the board. Open it here to keep a private note, prepare a question, and plan your first contribution.'))+'</div></div>';
+  if(collection)syncCollectionAction(saved);
 }
 function drawView(){
   setNav();
@@ -273,6 +291,7 @@ function saveIssue(issue){
     const added = toggleSaved(issue);
     savedCount();
     patchBookmarks(issue, added);
+    syncCollectionAction();
     syncWorkbenchMembership();
     toast(added ? 'Saved to your workbench.' : 'Removed from your workbench.');
     return added;
@@ -310,6 +329,16 @@ async function command(name){
   if(name==='close'){select('#utility-dialog')?.close();}
   if(name==='clear'){filters={...defaultFilters};limit=listSize;writeFilterUrl();if(select('#issue-search'))select('#issue-search').value='';if(select('[data-filter=sort]'))select('[data-filter=sort]').value='mix';renderFilters();renderResults();}
   if(name==='more'){const old=limit;limit+=listSize;renderResults();all('.issue-open')[old]?.focus({preventScroll:true});}
+  if(name==='save-collection' && page==='collection'){
+    try {
+      const issues=[...visibleIssues.values()];
+      const added=saveCollection(issues);
+      savedCount();
+      for(const issue of issues)patchBookmarks(issue,true);
+      syncCollectionAction();
+      toast(added ? added+' '+(added===1?'issue added':'issues added')+' to your workbench.' : 'This collection is already in your workbench.');
+    } catch(error){toast(error.message);}
+  }
   if(name==='share')await shareList();
   if(name==='session')openSession(readSaved(),{makeLink:ids=>collectionLink(ids)});
   if(name==='copy-link'){
@@ -365,6 +394,7 @@ window.addEventListener('storage',e=>{
     savedCount();
     const savedIds = new Set(readSaved().map(issue => issue.id.toLowerCase()));
     for(const item of visibleIssues.values())patchBookmarks(item,savedIds.has(item.id.toLowerCase()));
+    syncCollectionAction();
     syncWorkbenchMembership();
   }
   if(page==='workbench'&&(e.key===null||e.key?.startsWith('commonpatch-plan-v1:'))){

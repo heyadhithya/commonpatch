@@ -13,6 +13,8 @@ A contribution desk for people who want to work on public-interest open source. 
 3. Use the preparation checklist and write a private note. Save issues to the **Workbench**. Copy a first-comment draft and decide what to post yourself.
 4. Share a shortlist or build a **patch session**. A facilitator can download a calendar file and a Markdown handout. Only public issue references go into a collection link.
 
+**For a club session:** [Open the three-issue practice shortlist](https://commonpatch.vercel.app/#collection=ckan%2Fckan%239660%2Copenstreetmap%2Fid%238362%2Celectricitymaps%2Felectricitymaps-contrib%232912). Compare the linked work and contribution guides for CKAN, iD and Electricity Maps, then build an agenda from the issues your group chooses.
+
 ## Run locally
 
 Requires Node.js 22 or later. No accounts, API keys, package installation, or database setup are needed.
