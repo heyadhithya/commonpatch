@@ -28,3 +28,13 @@ Adithya’s portfolio documents civic technology, community service and student 
 ## What to test with people
 
 Ask five first-time contributors to select a cause, find one suitable issue and explain how they checked for existing work. Record task completion, confusing labels and the source they trusted. Then ask a club organizer to share a shortlist and open the calendar handout. Record whether their private notes stayed private and whether the export made the session easier to run. These are proposed usability tests. No interviews or adoption figures are claimed.
+
+## The case against another issue board
+
+GitHub already offers issue search, projects already label beginner tasks, and many directories list those tasks for free. A label alone tells a student little about whether someone has started the work. Indexes also go stale. CommonPatch earns a place only if a volunteer can check the discussion, avoid duplicating a pull request, and leave with a practical next step faster than searching GitHub directly.
+
+## Who might fund it
+
+Keep the public board and its source free. A university service-learning office or a civic-tech nonprofit could pay for a facilitated contribution session: a vetted shortlist for its cohort, maintainer coordination and a follow-up on what participants learned. The software already supplies reusable handouts and calendar files. Facilitation is a proposed service. Pricing and buyer demand still need validation.
+
+Run a pilot with one campus club. Record how many participants find a suitable issue, how often linked work changes their choice, and whether an organizer asks to run a second session. Ask the organizer to price and budget that second session before investing in accounts or paid product features.

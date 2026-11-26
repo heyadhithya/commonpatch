@@ -113,3 +113,5 @@ button svg,a svg{flex:none}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 .plan-status,.check-source{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;color:#44683e}.check-source{color:#93653e}.issue-open{min-height:40px}.board-titlebar h2:focus{outline:none}.mast .byline{min-height:44px;align-content:center}
+
+button.feed-status{border:0;background:transparent;padding:5px 0;cursor:pointer;text-align:left;min-height:32px}button.feed-status:hover span{text-decoration:underline;text-underline-offset:3px}.native-dialog .index-source{color:var(--ink)}#index-explanation{margin-bottom:16px}

@@ -249,8 +249,10 @@ function bindSession(dialog, available, selected, makeLink) {
         saveFile(markdownHandout(plan), 'text/markdown;charset=utf-8', 'patch-session.md');
         status.textContent = 'Markdown handout prepared for download.';
       } else if (kind === 'share') {
+        const requestedPlan = plan;
         const ids = plan.issues.map(issue => issue.id);
         const raw = await makeLink(ids);
+        if (plan !== requestedPlan || !dialog.isConnected) return;
         const link = new URL(raw, location.href);
         const references = decodeURIComponent(link.hash.replace(/^#collection=/, '')).split(',');
         if (link.origin !== location.origin || !/^https?:$/.test(link.protocol) || link.username || link.password || link.search || !link.hash.startsWith('#collection=') ||
@@ -260,8 +262,10 @@ function bindSession(dialog, available, selected, makeLink) {
         input.value = link.href;
         try {
           await navigator.clipboard.writeText(link.href);
+          if (plan !== requestedPlan || !dialog.isConnected) return;
           status.textContent = 'Issue list link copied. It contains the selected public issue references.';
         } catch {
+          if (plan !== requestedPlan || !dialog.isConnected) return;
           input.focus(); input.select();
           status.textContent = 'Link selected. Use your device’s Copy command.';
         }

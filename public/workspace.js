@@ -2,6 +2,7 @@ import {categories, icon, esc} from './icons.js';
 import {snapshotBoard, onlineBoard, readSaved, toggleSaved, isSaved, filterIssues, starter, parseCollection, collectionLink} from './store.js';
 import {openIssue, getIssuePlan} from './detail.js';
 import {openSession} from './session.js';
+import {describeIndex} from './index-status.js';
 import {renderGuide, bindGuide} from './guide.js';
 
 const main = document.getElementById('main');
@@ -22,6 +23,8 @@ let toastTimer;
 let visibleIssues = new Map();
 let sharedRefs = [];
 let dialogTrigger = null;
+let pendingBoardRefresh = false;
+let pendingWorkbenchSync = false;
 
 function toast(message) {
   const box=select('#notice');
@@ -46,18 +49,21 @@ function checkedTime(iso) {
   return Number.isFinite(+d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
 }
 function feedLabel() {
-  if(!board.asOf)return loading?'Checking GitHub…':'Issue index unavailable';
-  const when=checkedTime(board.asOf);
-  if(board.source==='snapshot')return 'Dated snapshot · '+when;
-  if(board.cache==='stale')return 'Last live check · '+when;
-  if(board.partial)return 'Partial GitHub index · '+when;
-  return 'GitHub sync · '+when;
+  const {label}=describeIndex(board,loading);
+  return board.asOf?label+' · '+checkedTime(board.asOf):label;
 }
 function syncLabel(){
   const box=select('#feed-status');
-  if(box){box.classList.toggle('snapshot',board.source!=='live'||board.cache==='stale');box.innerHTML='<i aria-hidden="true"></i><span>'+esc(feedLabel())+'</span>';}
+  if(box){box.classList.toggle('snapshot',board.source!=='live'||board.cache==='stale');box.innerHTML='<i aria-hidden="true"></i><span>'+esc(feedLabel())+'</span>'+icon('help',14);}
   const count=select('#index-issues');
   if(count){count.textContent=board.asOf?board.issues.length:'–';select('#index-projects').textContent=board.asOf?board.projects.length:'–';select('#index-causes').textContent=board.asOf?new Set(board.projects.map(p=>p.category)).size:'–';}
+}
+function updateIndexExplanation(){
+  const section=select('#index-explanation');
+  if(!section)return;
+  const info=describeIndex(board,loading);
+  const time=board.asOf?'<p>Checked <time datetime="'+esc(board.asOf)+'">'+esc(new Date(board.asOf).toLocaleString(undefined,{dateStyle:'long',timeStyle:'short'}))+'</time>.</p>':'';
+  section.innerHTML='<p class="index-source"><strong>'+esc(info.label)+'</strong></p><p>'+esc(info.detail)+'</p>'+time+'<p>CommonPatch reuses recent results for up to five minutes. The original GitHub issue has the latest discussion and assignment.</p>';
 }
 function setNav(){
   document.querySelectorAll('[data-nav]').forEach(a=>{
@@ -71,6 +77,10 @@ function projectIcon(cat,size=23){
   const def=categories[cat]||categories['Civic tech'];
   return '<span class="project-ico tone-'+def.tone+'">'+icon(def.icon,size)+'</span>';
 }
+function planSummary(plan) {
+  return plan.checks.filter(Boolean).length + '/3 prepared' + (plan.note ? ' · Private note' : '');
+}
+
 function renderIssue(issue, planInfo=false) {
   visibleIssues.set(issue.id.toLowerCase(),issue);
   const saved=isSaved(issue.id);
@@ -78,7 +88,7 @@ function renderIssue(issue, planInfo=false) {
   const labelClass=starter(issue)?'':' help';
   const date=age(issue.updatedAt);
   const plan = planInfo ? getIssuePlan(issue) : null;
-  const progress = plan ? '<span class="plan-status">'+icon('check',13)+plan.checks.filter(Boolean).length+'/3 prepared'+(plan.note?' · Private note':'')+'</span>' : '';
+  const progress = plan ? '<span class="plan-status">'+icon('check',13)+'<span data-plan-summary="'+esc(issue.id)+'">'+esc(planSummary(plan))+'</span></span>' : '';
   const statusNote=issue.offIndex?'<span class="check-source">Recheck on GitHub</span>':'';
   return '<article class="issue-card">'+projectIcon(issue.category)+'<div class="row-info"><div class="row-meta"><strong>'+esc(issue.project||issue.repo)+'</strong><span aria-hidden="true">/</span><code>#'+issue.number+'</code></div><button type="button" class="issue-open" data-issue="'+esc(issue.id)+'">'+esc(issue.title)+'</button><div class="row-tags">'+(label?'<span class="issue-label'+labelClass+'">'+esc(label)+'</span>':'')+(issue.language?'<span><i class="language-dot" aria-hidden="true"></i>'+esc(issue.language)+'</span>':'')+'<span class="activity" title="'+esc(checkedTime(issue.updatedAt))+'">'+icon('clock',12)+'Updated '+esc(date)+'</span>'+progress+statusNote+'</div></div><button class="bookmark-btn" data-save="'+esc(issue.id)+'" aria-pressed="'+saved+'" aria-label="'+(saved?'Remove from':'Save to')+' workbench: '+esc(issue.title)+'" title="'+(saved?'Remove from workbench':'Save to workbench')+'">'+icon('bookmark',18)+'</button></article>';
 }
@@ -105,7 +115,7 @@ function hero(){
 }
 function indexStrip(){
   const stat=(ic,id,label)=>'<span class="index-stat">'+icon(ic,16)+'<strong id="'+id+'">–</strong>'+label+'</span>';
-  return '<div class="index-strip"><div class="shell index-inner">'+stat('issue','index-issues','unassigned issues')+stat('layers','index-projects','projects')+stat('map','index-causes','causes')+'<span class="feed-status" id="feed-status"></span></div></div>';
+  return '<div class="index-strip"><div class="shell index-inner">'+stat('issue','index-issues','unassigned issues')+stat('layers','index-projects','projects')+stat('map','index-causes','causes')+'<button type="button" class="feed-status" id="feed-status" data-action="index-status" title="About the issue index"></button></div></div>';
 }
 function explore(){
   main.innerHTML=hero()+indexStrip()+'<section class="shell board" id="board" aria-labelledby="board-title"><div class="board-titlebar"><div><h2 id="board-title" tabindex="-1">Opportunity board</h2><p>Open, unassigned issues from public-interest projects.</p></div><div class="board-tools"><label class="search-box">'+icon('search',17)+'<input type="search" id="issue-search" placeholder="Search issues or projects…" aria-label="Search issues or projects" value="'+esc(filters.query)+'"></label><button class="btn filters-btn" data-action="filters">'+icon('filter',16)+'Filters</button></div></div><div class="board-columns"><div id="desktop-filters"></div><div class="result-rail"><div class="results-toolbar"><span id="result-count" role="status"></span><label class="sort-control">'+icon('sort',15)+'<span class="sr-only">Sort issues</span><span class="select-shell"><select data-filter="sort">'+options([['mix','Mix of causes'],['active','Recently updated'],['new','Recently opened'],['discussion','Fewest comments']],filters.sort)+'</select>'+icon('chevron',13)+'</span></label></div><div id="issue-rows" class="issue-list"></div><div id="load-more" class="more-row"></div></div></div></section>';
@@ -158,6 +168,8 @@ function drawView(){
   else workbench();
 }
 function updateBoardView(){
+  updateIndexExplanation();
+  if(select('.cpd-dialog[open]')){pendingBoardRefresh=true;return;}
   if(page==='explore'){renderFilters();renderResults();syncLabel();}
   else if(page==='projects')projects();
   else if(page==='collection'||page==='workbench')workbench();
@@ -203,20 +215,70 @@ function route(){
   drawView();window.scrollTo(0,0);
   if(page==='explore'&&qs)requestAnimationFrame(()=>select('#board')?.scrollIntoView());
 }
+function patchBookmarks(issue, saved) {
+  const id = issue.id.toLowerCase();
+  for (const button of all('[data-save]', main)) {
+    if (button.dataset.save.toLowerCase() !== id) continue;
+    button.setAttribute('aria-pressed', String(saved));
+    button.setAttribute('aria-label', (saved ? 'Remove from' : 'Save to') + ' workbench: ' + issue.title);
+    button.title = saved ? 'Remove from workbench' : 'Save to workbench';
+  }
+}
+
+function updatePlanSummary(issue, plan) {
+  if (page !== 'workbench') return;
+  const summary = all('[data-plan-summary]', main).find(node => node.dataset.planSummary.toLowerCase() === issue.id.toLowerCase());
+  const text = planSummary(plan);
+  if (summary && summary.textContent !== text) summary.textContent = text;
+}
+
+function cardFocus(trigger) {
+  const kind = trigger?.dataset?.issue ? 'issue' : trigger?.dataset?.save ? 'save' : '';
+  if (!kind) return null;
+  return { kind, id: trigger.dataset[kind].toLowerCase(), index: all('[data-' + kind + ']', main).indexOf(trigger), route: routeKey, trigger };
+}
+
+function focusTarget(context) {
+  if (!context) return null;
+  if (context.route !== routeKey) return main;
+  if (context.trigger.isConnected) return context.trigger;
+  const cards = all('[data-' + context.kind + ']', main);
+  return cards.find(node => node.dataset[context.kind].toLowerCase() === context.id) ||
+    cards[Math.max(0, Math.min(context.index, cards.length - 1))] ||
+    select('.bench-tools a[href="#explore"]', main) || select('#board-title', main) || main;
+}
+
+function syncWorkbenchMembership() {
+  if (page !== 'workbench') return;
+  if (select('.cpd-dialog[open]')) { pendingWorkbenchSync = true; return; }
+  const saved = readSaved();
+  const shown = all('.work-list [data-issue]', main);
+  if (shown.length === saved.length && shown.every((node, i) => node.dataset.issue.toLowerCase() === saved[i].id.toLowerCase())) return;
+  const focus = cardFocus(document.activeElement);
+  workbench();
+  if (focus) focusTarget(focus)?.focus({ preventScroll: true });
+}
+
+function finishIssue(context) {
+  const refresh = pendingBoardRefresh, sync = pendingWorkbenchSync;
+  pendingBoardRefresh = false;
+  pendingWorkbenchSync = false;
+  if (refresh) updateBoardView();
+  else if (sync) syncWorkbenchMembership();
+  return focusTarget(context);
+}
+
 function saveIssue(issue){
   try{
-    const added=toggleSaved(issue);savedCount();
-    if(page==='workbench'||page==='collection')workbench();else {
-      all('[data-save]').filter(b=>b.dataset.save===issue.id).forEach(b=>{
-        b.setAttribute('aria-pressed',String(added));
-        b.setAttribute('aria-label',(added?'Remove from':'Save to')+' workbench: '+issue.title);
-        b.title=added?'Remove from workbench':'Save to workbench';
-      });
-    }
-    toast(added?'Saved to your workbench.':'Removed from your workbench.');
+    const added = toggleSaved(issue);
+    savedCount();
+    patchBookmarks(issue, added);
+    syncWorkbenchMembership();
+    toast(added ? 'Saved to your workbench.' : 'Removed from your workbench.');
     return added;
   } catch(error){toast(error.message);throw error;}
 }
+
 function setFilter(key,value){
   filters[key]=value;limit=listSize;
   writeFilterUrl();renderFilters();renderResults();
@@ -255,6 +317,16 @@ async function command(name){
     try{await navigator.clipboard.writeText(input.value);select('#share-state').textContent='Collection link copied.';}
     catch{input.focus();input.select();select('#share-state').textContent='Link selected. Use your device’s Copy command.';}
   }
+  if(name==='index-status'){
+    utilityDialog('About this index','<div id="index-explanation"></div>'+button('recheck-index','Refresh index','refresh','btn-dark'));
+    updateIndexExplanation();
+  }
+  if(name==='recheck-index'){
+    const action=select('[data-action="recheck-index"]');
+    if(action)action.disabled=true;
+    await refresh(true);
+    if(action?.isConnected){action.disabled=false;action.focus();}
+  }
   if(name==='refresh')await refresh(true);
 }
 document.addEventListener('click',e=>{
@@ -264,17 +336,17 @@ document.addEventListener('click',e=>{
   const d=el.dataset;
   if(d.issue){
     const item=visibleIssues.get(d.issue.toLowerCase());
+    const focus = cardFocus(el);
     if(item)openIssue(item,{
       projects:board.projects,
+      onClose:()=>finishIssue(focus),
       isSaved:item=>isSaved(typeof item==='string'?item:item.id),
       toggleSaved:saveIssue,
       onPlanChange:(issue,plan)=>{
-        if(!plan.note && !plan.approach && !plan.checks.some(Boolean))return isSaved(issue.id);
-        if(!isSaved(issue.id)){
-          try{saveIssue(issue);}catch{return false;}
-        }
-        if(page==='workbench')workbench();
-        return true;
+        updatePlanSummary(issue,plan);
+        if(isSaved(issue.id))return true;
+        if(!plan.note && !plan.approach && !plan.checks.some(Boolean))return false;
+        try{return saveIssue(issue);}catch{return false;}
       },
       initialFocus:el,
       source:item.offIndex?'saved':board.source,
@@ -287,6 +359,17 @@ document.addEventListener('click',e=>{
   else if(d.action)command(d.action);
 });
 document.addEventListener('change',e=>{if(e.target.dataset.filter)setFilter(e.target.dataset.filter,e.target.value);});
-window.addEventListener('hashchange',()=>{select('#utility-dialog[open]')?.close();route();});
-window.addEventListener('storage',e=>{if(e.key==='commonpatch:saved:v1'||e.key===null){savedCount();updateBoardView();}});
+window.addEventListener('hashchange',()=>{select('#utility-dialog[open]')?.close();select('.cpd-dialog[open]')?.close();route();});
+window.addEventListener('storage',e=>{
+  if(e.key==='commonpatch:saved:v1'||e.key===null){
+    savedCount();
+    const savedIds = new Set(readSaved().map(issue => issue.id.toLowerCase()));
+    for(const item of visibleIssues.values())patchBookmarks(item,savedIds.has(item.id.toLowerCase()));
+    syncWorkbenchMembership();
+  }
+  if(page==='workbench'&&(e.key===null||e.key?.startsWith('commonpatch-plan-v1:'))){
+    const id=e.key?.slice('commonpatch-plan-v1:'.length);
+    for(const issue of visibleIssues.values())if(!id||issue.id.toLowerCase()===id)updatePlanSummary(issue,getIssuePlan(issue));
+  }
+});
 route();refresh();

@@ -2,6 +2,10 @@
 
 A contribution desk for people who want to work on public-interest open source. Find maintained projects by cause, inspect an issue and its linked work, prepare a first contribution, or organize a small group session.
 
+[Open CommonPatch](https://commonpatch.vercel.app/)
+
+![CommonPatch — Open source for the public good](public/art/social-card.png)
+
 ## Try it
 
 1. Browse the **Opportunity board** by cause, repository language, or maintainer label. Search matches issue titles, project names, repositories, and labels. A mix of causes is shown by default.

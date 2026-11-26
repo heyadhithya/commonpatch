@@ -297,7 +297,7 @@ function renderActivity(region, view, source, loading, issue) {
     if (open) summary.textContent = open + (open === 1 ? ' open pull request references' : ' open pull requests reference') +
       ' this issue. Read the proposed changes before starting a similar fix.';
     else if (view.pulls.length) summary.textContent = 'Earlier pull requests reference this issue. Check what they cover before choosing your next step.';
-    else summary.textContent = 'No pull-request references appeared in the checked events. Someone may still be working on the issue.';
+    else summary.textContent = 'The checked events returned no pull-request references. Someone may still be working on the issue.';
     if (view.pulls.length) {
       const links = element('ul', 'cpd-linked');
       for (const pr of view.pulls) {
@@ -318,7 +318,7 @@ function renderActivity(region, view, source, loading, issue) {
       last.append(external(view.discussion.url ? 'Read comment on GitHub' : 'Open issue discussion', view.discussion.url || issueLink(issue), 'external'));
       details.append(last);
     } else {
-      details.append(element('p', 'cpd-activity-scope', 'No discussion comments appeared in the checked events.'));
+      details.append(element('p', 'cpd-activity-scope', 'The timeline check returned no discussion comment to show.'));
     }
     details.append(element('p', 'cpd-activity-scope', activityScope(view)));
   }
@@ -391,7 +391,7 @@ export async function openIssue(issue, options = {}) {
     if (memoryOnly) announce('This plan is held in this tab. Browser storage is unavailable.');
     else signals.textContent = '';
     function reflectBookmark(result) {
-      if (result === true && !retired) { saved = true; showBookmark(); }
+      if (result === true && !saved && !retired) { saved = true; showBookmark(); }
     }
     try {
       const result = options.onPlanChange?.(issue, normalizePlan(plan));
@@ -490,7 +490,8 @@ export async function openIssue(issue, options = {}) {
     if (dialog.open) dialog.close();
     dialog.remove();
     if (current?.dialog === dialog) current = null;
-    if (restoreFocus && trigger?.isConnected) trigger.focus({ preventScroll: true });
+    const returnTarget = options.onClose?.() || trigger;
+    if (restoreFocus && returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
   }
   current = { dialog, retire: () => retire(false) };
   dialog.addEventListener('close', () => retire(true), { once: true });
