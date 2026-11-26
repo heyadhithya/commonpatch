@@ -1,0 +1,108 @@
+[
+  {
+    "repo": "openstreetmap/iD",
+    "name": "iD",
+    "description": "OpenStreetMap’s browser-based editor for mapping roads, buildings and other geographic features.",
+    "category": "Mapping",
+    "language": "JavaScript",
+    "url": "https://github.com/openstreetmap/iD",
+    "contributingUrl": "https://github.com/openstreetmap/iD/blob/develop/CONTRIBUTING.md"
+  },
+  {
+    "repo": "electricitymaps/electricitymaps-contrib",
+    "name": "Electricity Maps",
+    "description": "Data sources and calculation tools for tracking electricity generation and carbon intensity.",
+    "category": "Climate",
+    "language": "Python",
+    "url": "https://github.com/electricitymaps/electricitymaps-contrib",
+    "contributingUrl": "https://github.com/electricitymaps/electricitymaps-contrib/blob/master/CONTRIBUTING.md"
+  },
+  {
+    "repo": "nvaccess/nvda",
+    "name": "NVDA",
+    "description": "A free, open-source Windows screen reader developed with the blind and low-vision community.",
+    "category": "Accessibility",
+    "language": "Python",
+    "url": "https://github.com/nvaccess/nvda",
+    "contributingUrl": "https://github.com/nvaccess/nvda/blob/master/.github/CONTRIBUTING.md"
+  },
+  {
+    "repo": "decidim/decidim",
+    "name": "Decidim",
+    "description": "A platform for participatory democracy, public proposals and community decision-making.",
+    "category": "Civic tech",
+    "language": "Ruby",
+    "url": "https://github.com/decidim/decidim",
+    "contributingUrl": "https://github.com/decidim/decidim/blob/develop/CONTRIBUTING.adoc",
+    "opportunityLabels": [
+      "help welcome"
+    ]
+  },
+  {
+    "repo": "streetcomplete/StreetComplete",
+    "name": "StreetComplete",
+    "description": "An Android app that lets people improve OpenStreetMap by answering questions on the ground.",
+    "category": "Mapping",
+    "language": "Kotlin",
+    "url": "https://github.com/streetcomplete/StreetComplete",
+    "contributingUrl": "https://github.com/streetcomplete/StreetComplete/blob/master/CONTRIBUTING.md"
+  },
+  {
+    "repo": "organicmaps/organicmaps",
+    "name": "Organic Maps",
+    "description": "An offline mapping and navigation app built with OpenStreetMap data.",
+    "category": "Mapping",
+    "language": "C++",
+    "url": "https://github.com/organicmaps/organicmaps",
+    "contributingUrl": "https://github.com/organicmaps/organicmaps/blob/master/CONTRIBUTING.md"
+  },
+  {
+    "repo": "openfoodfacts/openfoodfacts-server",
+    "name": "Open Food Facts",
+    "description": "A collaborative food database and the software behind its public product information.",
+    "category": "Open knowledge",
+    "language": "HTML",
+    "url": "https://github.com/openfoodfacts/openfoodfacts-server",
+    "contributingUrl": "https://github.com/openfoodfacts/openfoodfacts-server/blob/main/CONTRIBUTING.md"
+  },
+  {
+    "repo": "OpenRefine/OpenRefine",
+    "name": "OpenRefine",
+    "description": "A tool for cleaning, transforming and reconciling messy datasets.",
+    "category": "Open knowledge",
+    "language": "Java",
+    "url": "https://github.com/OpenRefine/OpenRefine",
+    "contributingUrl": "https://github.com/OpenRefine/OpenRefine/blob/master/CONTRIBUTING.md"
+  },
+  {
+    "repo": "dequelabs/axe-core",
+    "name": "axe-core",
+    "description": "An accessibility testing engine for web pages and applications.",
+    "category": "Accessibility",
+    "language": "HTML",
+    "url": "https://github.com/dequelabs/axe-core",
+    "contributingUrl": "https://github.com/dequelabs/axe-core/blob/develop/CONTRIBUTING.md"
+  },
+  {
+    "repo": "PyPSA/PyPSA",
+    "name": "PyPSA",
+    "description": "Open-source tools for modelling and analysing energy systems.",
+    "category": "Climate",
+    "language": "Python",
+    "url": "https://github.com/PyPSA/PyPSA",
+    "contributingUrl": "https://github.com/PyPSA/PyPSA/blob/master/CONTRIBUTING.md"
+  },
+  {
+    "repo": "ckan/ckan",
+    "name": "CKAN",
+    "description": "An open-source data portal used to publish and discover public datasets.",
+    "category": "Civic tech",
+    "language": "Python",
+    "url": "https://github.com/ckan/ckan",
+    "contributingUrl": "https://github.com/ckan/ckan/blob/master/CONTRIBUTING.md",
+    "opportunityLabels": [
+      "Good for Contribution",
+      "Beginner Friendly"
+    ]
+  }
+]

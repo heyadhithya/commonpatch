@@ -1,0 +1,42 @@
+name: Suggest a project
+description: Recommend a public-interest open-source project for the CommonPatch catalog.
+title: "Project suggestion — "
+body:
+  - type: markdown
+    attributes:
+      value: "Help contributors find a project serving a public need. Your suggestion will appear in a public GitHub issue."
+  - type: input
+    id: repository
+    attributes:
+      label: Public GitHub repository
+      placeholder: https://github.com/organization/project
+    validations:
+      required: true
+  - type: dropdown
+    id: cause
+    attributes:
+      label: Which cause fits best?
+      options:
+        - Mapping
+        - Climate
+        - Accessibility
+        - Open knowledge
+        - Civic tech
+        - Another public-interest area
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Who does it help?
+      description: In a sentence or two, describe the public need and how the project serves it.
+    validations:
+      required: true
+  - type: input
+    id: contributing
+    attributes:
+      label: Where can a newcomer get started?
+      description: Link to a contribution guide, project README or a public issue inviting help.
+      placeholder: https://github.com/organization/project/blob/main/CONTRIBUTING.md
+    validations:
+      required: true
